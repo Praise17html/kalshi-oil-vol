@@ -2,7 +2,7 @@
 
   Q1  Width   - Is the spread of outcomes Kalshi prices wider or narrower than OVX implies?
   Q2  Accuracy - Whose probabilities score better on what actually happened: Kalshi, or the model?
-                 Where - centre vs tails, EIA Wednesdays vs other days?
+                 Where - centre vs tails, EIA report days vs other days?
   Q3  Edge    - After Kalshi's fees and the bid/ask spread, would trading the gap have made money?
 
 Usage:
@@ -107,7 +107,7 @@ def main():
         raise SystemExit("No usable snapshots - check that candles cover the hours before close.")
     snaps = snaps[snaps["fit_ok"] == True].copy()  # noqa: E712
     snaps["bucket"] = snaps["z"].map(bucket)
-    snaps["day_type"] = np.where(snaps["is_eia_wednesday"], "EIA Wednesday", "other days")
+    snaps["day_type"] = np.where(snaps["is_eia_day"], "EIA report day", "other days")
     snaps.to_csv(out / "snapshots.csv", index=False)
 
     md = ["# Kalshi WTI vs OVX - results\n",
@@ -146,7 +146,7 @@ def main():
     md.append(score_table(snaps).round(4).to_markdown(index=False) + "\n")
     md.append("By distance from the centre:\n")
     md.append(score_table(snaps, "bucket").round(4).to_markdown(index=False) + "\n")
-    md.append("EIA Wednesdays vs other days:\n")
+    md.append("EIA report days (usually Wednesday; Thursday in holiday weeks) vs other days:\n")
     md.append(score_table(snaps, "day_type").round(4).to_markdown(index=False) + "\n")
 
     bins = [0, .05, .1, .2, .3, .4, .5, .6, .7, .8, .9, .95, 1.0001]

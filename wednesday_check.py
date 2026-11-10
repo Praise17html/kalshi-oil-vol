@@ -1,4 +1,6 @@
-"""Is oil really more volatile on EIA Wednesdays, and does Kalshi price that in?
+"""Is oil really more volatile on EIA report days, and does Kalshi price that in?
+
+The report is usually Wednesday 10:30 am ET, moved to Thursday in holiday weeks (see oilvol/eia.py).
 
 For every Kalshi WTI ladder snapshot (from analyse.py), this measures how far WTI futures
 actually moved between the snapshot and the 2:30 pm ET settle, then compares three numbers,
@@ -27,7 +29,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from oilvol import futures
+from oilvol import eia, futures
 from oilvol.dataset import ET, tau_years
 
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
@@ -57,7 +59,7 @@ def build(snaps: pd.DataFrame, center: pd.Series) -> pd.DataFrame:
         move = np.log(p1 / p0)
         rows.append({
             "event_ticker": r.event_ticker, "series": r.series, "hours_before": r.hours_before,
-            "settle_date": r.settle_date, "weekday": r.weekday, "is_wed": r.weekday == "Wed",
+            "settle_date": r.settle_date, "weekday": r.weekday, "is_wed": eia.is_release_day(r.settle_date),
             "move_pct": move * 100,
             "realised": abs(move) / np.sqrt(tau_settle),            # annualised, same clock
             # Kalshi's width was fitted to the market's close time; re-express it to the settle
@@ -81,7 +83,7 @@ def summarise(df: pd.DataFrame, by: list[str]) -> pd.DataFrame:
 
 
 def uplift(df: pd.DataFrame, col: str, n_boot: int = 4000, seed: int = 1):
-    """Wednesday / other-days ratio of RMS volatility, with a bootstrap 90% interval."""
+    """EIA-report-day / other-days ratio of RMS volatility, with a bootstrap 90% interval."""
     wed, oth = df.loc[df["is_wed"], col].to_numpy(), df.loc[~df["is_wed"], col].to_numpy()
     if len(wed) < 3 or len(oth) < 3:
         return np.nan, np.nan, np.nan
@@ -122,16 +124,16 @@ def main():
           "Kalshi market close times (ET), most common: "
           + ", ".join(f"{k} ({v})" for k, v in close_clock.items()) + "\n"]
 
-    md.append("## The headline: how much bigger are Wednesday moves, and does Kalshi price it?\n")
-    md.append("Ratio of Wednesday volatility to other days (1.00 = no difference), daily KXWTI ladder, "
-              "with a bootstrap 90% interval:\n")
+    md.append("## The headline: how much bigger are EIA-report-day moves, and does Kalshi price it?\n")
+    md.append("Ratio of volatility on EIA report days to other days (1.00 = no difference), daily KXWTI "
+              "ladder, with a bootstrap 90% interval. Report days are Wednesdays, or Thursdays in holiday weeks:\n")
     rows = []
     for h in sorted(daily["hours_before"].unique(), reverse=True):
         d = daily[daily["hours_before"] == h]
         for col, label in [("realised", "Actually happened (futures)"), ("kalshi", "Kalshi priced"),
                            ("ovx", "OVX implied")]:
             p, lo, hi = uplift(d, col)
-            rows.append({"snapshot": f"{h:g}h before", "measure": label, "Wed / other days": round(p, 2),
+            rows.append({"snapshot": f"{h:g}h before", "measure": label, "EIA day / other days": round(p, 2),
                          "90% interval": f"{lo:.2f} to {hi:.2f}"})
     md.append(pd.DataFrame(rows).to_markdown(index=False) + "\n")
 

@@ -96,3 +96,11 @@ def test_get_retries_after_timeout(monkeypatch, tmp_path):
     c = kalshi.KalshiClient(cache_dir=tmp_path, pause=0)
     monkeypatch.setattr(c.session, "get", flaky)
     assert c.get("/markets") == {"ok": True} and calls["n"] == 3
+
+
+def test_eia_release_days_follow_holiday_schedule():
+    from oilvol import eia
+    assert eia.is_release_day("2026-11-04")        # normal Wednesday
+    assert not eia.is_release_day("2026-11-11")    # Veterans Day week: no Wednesday release
+    assert eia.is_release_day("2026-11-12")        # ...it moves to Thursday
+    assert not eia.is_release_day("2026-11-05")    # ordinary Thursday

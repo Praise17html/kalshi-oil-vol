@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
-from . import model
+from . import eia, model
 from .fred import asof_value
 
 ET = ZoneInfo("America/New_York")
@@ -117,7 +117,7 @@ def build_snapshots(markets: pd.DataFrame, candles: pd.DataFrame, sigma_ovx: pd.
                     "event_ticker": event, "ticker": m["ticker"], "series": event.split("-")[0],
                     "strike_type": st, "floor": fl, "cap": cp,
                     "close_ts": close_ts, "settle_date": close_et.date().isoformat(),
-                    "weekday": close_et.strftime("%a"), "is_eia_wednesday": close_et.weekday() == 2,
+                    "weekday": close_et.strftime("%a"), "is_eia_day": eia.is_release_day(close_et.date()),
                     "hours_before": h, "snap_ts": snap_ts, "tau": tau,
                     "bid": bid, "ask": ask, "mid": (bid + ask) / 2, "spread": ask - bid,
                     "y": 1 if m["result"] == "yes" else 0,

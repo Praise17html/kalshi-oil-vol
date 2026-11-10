@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from oilvol import fred, futures, model
-from oilvol.dataset import informative, tau_years
+from oilvol import eia, fred, futures, model
+from oilvol.dataset import ET, informative, tau_years
 from oilvol.kalshi import KalshiClient, to_ts
 
 
@@ -72,6 +72,8 @@ def main():
                              "strike_type": m["strike_type"], "floor": m.get("floor_strike"),
                              "cap": m.get("cap_strike"), "close_time": m["close_time"],
                              "hours_to_close": round((close_ts - now_ts) / 3600, 2), "tau": tau,
+                             "eia_report_day": eia.is_release_day(
+                                 datetime.fromtimestamp(close_ts, tz=timezone.utc).astimezone(ET).date()),
                              "bid": bid, "ask": ask, "mid": (bid + ask) / 2,
                              "fit_F": fit.F, "F_ext": F_ext, "fit_sigma": fit.sigma, "sigma_ovx": sigma_ovx,
                              "p_ovx": p, "signal": signal})

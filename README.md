@@ -65,7 +65,8 @@ Before trusting results, check:
 python wednesday_check.py                 # needs outputs/snapshots.csv from analyse.py
 ```
 Measures how much WTI futures actually moved before each settle and compares that with what
-Kalshi priced and what OVX implied, split by weekday. If EIA Wednesdays move much more but Kalshi
+Kalshi priced and what OVX implied, split by weekday and by EIA report day (Wednesday, or Thursday in
+holiday weeks - see `oilvol/eia.py`). If report days move much more but Kalshi
 prices them about the same as other days, that supports the EIA-day finding directly.
 
 ## Step 2: forward test (start this in week 1 and never skip a day)
@@ -103,7 +104,7 @@ real out-of-sample record, which is exactly what Moreton's Alpha Signal Program 
 | 6-7 | Q1 deep dive: width ratio by weekday, EIA vs non-EIA, 24h vs 6h, daily vs weekly. |
 | 8 | Q2: calibration and the longshot test in oil. Compare with Bürgi, Deng & Whelan's all-Kalshi result. |
 | 9 | Q3: backtest robustness (buffer 1-4c, order size, centre vs shoulder vs tail only). |
-| 10 | Improve the model: scale OVX on EIA Wednesdays by the factor you measured on the first half of the data. |
+| 10 | Improve the model: scale OVX on EIA report days by the factor you measured on the first half of the data. |
 | 11-12 | Out-of-sample: fit any choices on months 1-3, test on months 4-6. Report both, even if the edge disappears. |
 | 13 | Write the one-page note: question, data, method, three findings with numbers, limits, next steps. |
 | 14 | Put the results and two charts in this README, tidy the code, push. |
