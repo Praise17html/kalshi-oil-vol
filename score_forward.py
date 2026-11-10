@@ -35,12 +35,14 @@ def main():
     files = sorted(Path(args.log).glob("*.csv"))
     if not files:
         raise SystemExit("No forward logs yet - run forward_log.py first.")
-    log = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    log = pd.concat([pd.read_csv(f).assign(log_date=f.name[:10]) for f in files], ignore_index=True)
+    # If the log ran more than once in a day (by hand and by the scheduler), score only the first run.
+    log = log.drop_duplicates(["ticker", "log_date"], keep="first")
     res = fetch_results(KalshiClient(cache_dir="data/raw"), sorted(log["ticker"].unique()))
     log["result"] = log["ticker"].map(res)
     done = log.dropna(subset=["result"]).copy()
     done["y"] = (done["result"] == "yes").astype(int)
-    print(f"Logged rows: {len(log)} | settled: {len(done)} | days logged: {len(files)}")
+    print(f"Logged rows: {len(log)} | settled: {len(done)} | days logged: {log["log_date"].nunique()}")
     if done.empty:
         return
     print(f"Brier  Kalshi mid: {model.brier(done['mid'], done['y']):.4f}   "

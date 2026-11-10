@@ -40,6 +40,7 @@ timestamps show each prediction was made before its outcome. Scored with `score_
 | `analyse.py` | Builds snapshots and answers Q1 (width), Q2 (accuracy), Q3 (edge after fees) |
 | `forward_log.py` | **Run every weekday.** Logs model prices *before* settlement, for a timestamped track record |
 | `daily.ps1` | Windows: the whole daily routine in one command (`.\daily.ps1`) |
+| `schedule_daily.ps1` | Windows, one-time: runs `daily.ps1` automatically every weekday at 1:20 pm |
 | `score_forward.py` | Scores the forward log once contracts settle |
 | `wednesday_check.py` | Realised vs Kalshi-priced vs OVX volatility by settle weekday (the EIA-Wednesday test) |
 | `make_demo_data.py` | Synthetic data with planted flaws, so you can run everything offline |

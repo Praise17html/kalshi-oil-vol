@@ -8,11 +8,14 @@
 
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
+# Keep a copy of everything this run prints, so an automatic run can be checked afterwards.
+Start-Transcript -Path "$PSScriptRoot\last_run.txt" | Out-Null
 
 function Fail($msg) {
     Write-Host ""
     Write-Host "STOPPED: $msg" -ForegroundColor Red
     Write-Host "Nothing after this step ran. Copy the messages above and paste them to Claude."
+    Stop-Transcript | Out-Null
     exit 1
 }
 
@@ -57,3 +60,4 @@ if ((Get-Date).DayOfWeek -eq "Friday") {
 
 Write-Host ""
 Write-Host "Done. Today's log is on GitHub." -ForegroundColor Green
+Stop-Transcript | Out-Null
