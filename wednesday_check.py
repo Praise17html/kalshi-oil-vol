@@ -66,7 +66,14 @@ def build(snaps: pd.DataFrame, center: pd.Series) -> pd.DataFrame:
             "kalshi": r.fit_sigma * np.sqrt(r.tau / tau_settle),
             "ovx": r.sigma_ovx,
         })
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return df
+    # Kalshi changed its ticker format (KXWTI-26NOV03 -> KXWTI-26NOV0314), so one settle day can
+    # appear twice; count each day once.
+    return (df.sort_values("event_ticker")
+              .drop_duplicates(["series", "settle_date", "hours_before"], keep="last")
+              .reset_index(drop=True))
 
 
 def summarise(df: pd.DataFrame, by: list[str]) -> pd.DataFrame:
@@ -137,6 +144,21 @@ def main():
                          "90% interval": f"{lo:.2f} to {hi:.2f}"})
     md.append(pd.DataFrame(rows).to_markdown(index=False) + "\n")
 
+    # One huge day can carry the whole ratio, so show it again without the biggest report-day move.
+    notes = []
+    for h in sorted(daily["hours_before"].unique(), reverse=True):
+        d = daily[daily["hours_before"] == h]
+        eia_days = d[d["is_wed"]]
+        if len(eia_days) < 4:
+            continue
+        top = eia_days.loc[eia_days["move_pct"].abs().idxmax()]
+        p, lo, hi = uplift(d.drop(index=top.name), "realised")
+        notes.append(f"- {h:g}h before: without {top.settle_date} (move {top.move_pct:+.1f}%), "
+                     f"actually happened = {p:.2f} ({lo:.2f} to {hi:.2f})")
+    if notes:
+        md.append("**Robustness: drop the single biggest report-day move**\n")
+        md.append("\n".join(notes) + "\n")
+
     md.append("## By weekday (daily KXWTI)\n")
     md.append("realised / Kalshi above 1 means the market under-priced the moves that actually came.\n")
     for h in sorted(daily["hours_before"].unique(), reverse=True):
@@ -145,7 +167,7 @@ def main():
         md.append(t.to_markdown() + "\n")
 
     if (df["series"] == "KXWTIW").any():
-        md.append("## Weekly ladder (KXWTIW, settles Fridays; the window includes Wednesday's report)\n")
+        md.append("## Weekly ladder (KXWTIW, settles Fridays; these snapshots are taken Thursday/Friday, after that week's report, so they are a check on Kalshi's general width, not on report days)\n")
         md.append(summarise(df[df["series"] == "KXWTIW"], ["hours_before"]).to_markdown() + "\n")
 
     md.append("\n_Notes: futures prices are hourly closes (the bar ending at or before each time), so moves in "
