@@ -15,6 +15,7 @@ its **width** from OVX, so Kalshi prices are never used to price Kalshi.
 | `download.py` | Pulls settled Kalshi WTI markets, hourly bid/ask, OVX and WTI from FRED, optional CL=F hourly |
 | `analyse.py` | Builds snapshots and answers Q1 (width), Q2 (accuracy), Q3 (edge after fees) |
 | `forward_log.py` | **Run every weekday.** Logs model prices *before* settlement, for a timestamped track record |
+| `daily.ps1` | Windows: the whole daily routine in one command (`.\daily.ps1`) |
 | `score_forward.py` | Scores the forward log once contracts settle |
 | `wednesday_check.py` | Realised vs Kalshi-priced vs OVX volatility by settle weekday (the EIA-Wednesday test) |
 | `make_demo_data.py` | Synthetic data with planted flaws, so you can run everything offline |
@@ -70,6 +71,10 @@ holiday weeks - see `oilvol/eia.py`). If report days move much more but Kalshi
 prices them about the same as other days, that supports the EIA-day finding directly.
 
 ## Step 2: forward test (start this in week 1 and never skip a day)
+
+On Windows the whole routine is one command, run from the project folder: `.\daily.ps1`. It switches on
+the environment, logs, commits, pulls any updates and pushes (and on Fridays also runs `score_forward.py`).
+The manual steps are:
 
 ```bash
 python forward_log.py                     # ~2:30 pm Lagos: 6h before the 2:30 pm ET settle (8:30 pm Lagos Nov-Mar)
