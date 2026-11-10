@@ -16,6 +16,7 @@ its **width** from OVX, so Kalshi prices are never used to price Kalshi.
 | `analyse.py` | Builds snapshots and answers Q1 (width), Q2 (accuracy), Q3 (edge after fees) |
 | `forward_log.py` | **Run every weekday.** Logs model prices *before* settlement, for a timestamped track record |
 | `score_forward.py` | Scores the forward log once contracts settle |
+| `wednesday_check.py` | Realised vs Kalshi-priced vs OVX volatility by settle weekday (the EIA-Wednesday test) |
 | `make_demo_data.py` | Synthetic data with planted flaws, so you can run everything offline |
 | `oilvol/model.py` | Lognormal contract pricing, implied centre/width fit, Kalshi fee formula, scores |
 | `oilvol/dataset.py` | Snapshots, trading-time clock (CME Globex hours) |
@@ -57,6 +58,15 @@ Before trusting results, check:
 - The series fee settings that `download.py` prints. Fees here assume the general schedule: taker
   `round_up(0.07 x C x P x (1-P))`, makers free.
 - How early contracts open. If 24h snapshots are missing, pass `--hours-before 12 6 --trade-hours 12`.
+
+## Step 1b: the Wednesday check
+
+```bash
+python wednesday_check.py                 # needs outputs/snapshots.csv from analyse.py
+```
+Measures how much WTI futures actually moved before each settle and compares that with what
+Kalshi priced and what OVX implied, split by weekday. If EIA Wednesdays move much more but Kalshi
+prices them about the same as other days, that supports the EIA-day finding directly.
 
 ## Step 2: forward test (start this in week 1 and never skip a day)
 
