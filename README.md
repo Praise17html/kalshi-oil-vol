@@ -1,12 +1,36 @@
 # Kalshi oil contracts vs the options market
 
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![Data](https://img.shields.io/badge/data-Kalshi%20%7C%20FRED%20%7C%20CL%3DF-555)
+![Forward test](https://img.shields.io/badge/forward%20test-live%20since%2010%20Nov%202026-2ea44f)
+
 **Question:** Kalshi lists daily (`KXWTI`) and weekly (`KXWTIW`) contracts on where WTI crude settles. A
 full set of strikes is a bet on volatility: the market prices a spread of outcomes. Is that spread
 wider or narrower than the oil options market (OVX) says it should be? Where is the gap largest: the
-middle, the tails, or EIA report Wednesdays? And is any of it tradeable after Kalshi's fees and spread?
+middle, the tails, or EIA report days? And is any of it tradeable after Kalshi's fees and spread?
 
 This is a volatility study, not a directional one. The model takes its **centre** from WTI futures and
 its **width** from OVX, so Kalshi prices are never used to price Kalshi.
+
+## Results: one year, 219 Kalshi WTI events (Nov 2025 to Nov 2026)
+
+- **Width.** A day before settle, Kalshi priced about 15% less volatility than OVX (median ratio 0.85).
+  Six hours before settle it priced about 7% more (1.07). Day-ahead, Kalshi's narrower width was closer to
+  the moves that actually came.
+- **Accuracy.** Kalshi's mid prices were as accurate as the OVX model (Brier 0.0694 vs 0.0697 over 8,659
+  contracts) and well calibrated above 5 cents. On ordinary days, trading against Kalshi made -0.4c per
+  contract after fees: no edge.
+- **EIA report days.** Trading the OVX model against Kalshi made **+7.8c per contract after fees** over 30
+  report days (t = 1.5). It falls to +4.9c without the best day and +3.0c (t = 0.7) without the best two,
+  so it is promising but not yet proven.
+- **Report-day moves.** Not clearly larger than other days once one overnight news shock (8 April) is
+  removed (ratio 1.06), and Kalshi priced report days no differently (0.99).
+
+![Report-day P&L](docs/report_day_pnl.png)
+
+**Live forward test.** Since 10 November 2026 the model's prices for every open contract are committed to
+[`forward_log/`](forward_log) each weekday, about 7 hours before the 2:30 pm New York settle. The commit
+timestamps show each prediction was made before its outcome. Scored with `score_forward.py`.
 
 ## Files
 
@@ -31,7 +55,7 @@ its **width** from OVX, so Kalshi prices are never used to price Kalshi.
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 pip install yfinance          # optional but recommended: independent futures centre
-python -m pytest -q           # should say: 9 passed
+python -m pytest -q           # should say: 13 passed
 ```
 
 ## Step 0: run the demo first (no internet needed)
@@ -97,25 +121,7 @@ real out-of-sample record, which is exactly what Moreton's Alpha Signal Program 
 - **Scoring.** Brier score on settled outcomes, all models on the same contracts. The backtest trades at the
   bid or ask with taker fees, and t-stats are computed across events, not trades.
 
-## Three-week plan at about 2 hours a day
-
-| Day | Task |
-|---|---|
-| 1 | Set up the repo, run tests and the demo. Read the Kalshi WTI rules and the Dune post on the KXWTI ladder (see below). |
-| 2 | `download.py --since` 30 days ago. Plot one day's ladder by hand and check the strikes, open times and fees look right. |
-| 3 | Pull 6-12 months and run `analyse.py`. First look at Q1. |
-| 4 | **Start `forward_log.py` daily from today.** Make the GitHub repo public. |
-| 5 | Data checks: front-month roll days, missing quotes, fit failures (`fit_ok`, `fit_rmse`). |
-| 6-7 | Q1 deep dive: width ratio by weekday, EIA vs non-EIA, 24h vs 6h, daily vs weekly. |
-| 8 | Q2: calibration and the longshot test in oil. Compare with Bürgi, Deng & Whelan's all-Kalshi result. |
-| 9 | Q3: backtest robustness (buffer 1-4c, order size, centre vs shoulder vs tail only). |
-| 10 | Improve the model: scale OVX on EIA report days by the factor you measured on the first half of the data. |
-| 11-12 | Out-of-sample: fit any choices on months 1-3, test on months 4-6. Report both, even if the edge disappears. |
-| 13 | Write the one-page note: question, data, method, three findings with numbers, limits, next steps. |
-| 14 | Put the results and two charts in this README, tidy the code, push. |
-| 15 | Message Les with one chart, one sentence and the link. |
-
-## Pitfalls to check (and mention in the write-up)
+## Limitations
 
 - OVX is 30-day implied vol on USO options, not a daily WTI option. A one-day horizon has its own term structure.
 - Around each monthly roll, CL=F and Kalshi's "front month" can refer to different contracts. Flag those days.
@@ -129,7 +135,3 @@ real out-of-sample record, which is exactly what Moreton's Alpha Signal Program 
 - Kalshi WTI contract terms: https://kalshi-public-docs.s3.amazonaws.com/contract_terms/WTIOIL.pdf
 - Dune, "Self-calibrating commodity event contracts: WTI front-month settle": https://dune.com/blog/kalshi-wti-self-calibrating-event-contracts
 - Bürgi, Deng & Whelan, "Makers and Takers: The Economics of the Kalshi Prediction Market": https://www.karlwhelan.com/Papers/Kalshi.pdf
-
-## Results
-
-_To be filled in from `outputs/summary.md` once the real data is in._
