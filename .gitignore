@@ -1,0 +1,9 @@
+data/
+data_demo/
+outputs/
+outputs_demo/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# keep forward_log/ in git: it is your timestamped track record
